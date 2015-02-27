@@ -5,8 +5,10 @@
 # Based on original work in C from https://code.google.com/p/tm1638-library/
 # Converted to python by Jacek Fedorynski <jfedor@jfedor.org> (common cathode)
 # Converted for TM1638 common anode by John Blackmore <john@johnblackmore.com>
+# Converted for common cathode with addons from John
 
 import RPi.GPIO as GPIO
+from time import sleep
 
 GPIO.setwarnings(False) # suppresses warnings on RasPi
 
@@ -45,7 +47,8 @@ class TM1638(object):
         'y': 0b01101110,
         'C': 0b00111001,
         'P': 0b01110011,
-        'U': 0b00111110
+        'U': 0b00111110,
+	' ': 0b00000000
     }
 
     def __init__(self, dio, clk, stb):
@@ -60,35 +63,46 @@ class TM1638(object):
         GPIO.setup(self.stb, GPIO.OUT)
 
         GPIO.output(self.stb, True)
+	sleep(0.001)
         GPIO.output(self.clk, True)
+	sleep(0.001)
 
         self.send_command(0x40)
         self.send_command(0x80 | 8 | min(7, intensity))
 
         GPIO.output(self.stb, False)
+	sleep(0.001)
         self.send_byte(0xC0)
         for i in range(16):
             self.send_byte(0x00)
         GPIO.output(self.stb, True)
+	sleep(0.001)
 
     def send_command(self, cmd):
         GPIO.output(self.stb, False)
+	sleep(0.001)
         self.send_byte(cmd)
         GPIO.output(self.stb, True)
+	sleep(0.001)
 
     def send_data(self, addr, data):
         self.send_command(0x44)
         GPIO.output(self.stb, False)
+	sleep(0.001)
         self.send_byte(0xC0 | addr)
         self.send_byte(data)
         GPIO.output(self.stb, True)
+	sleep(0.001)
 
     def send_byte(self, data):
         for i in range(8):
             GPIO.output(self.clk, False)
+	    sleep(0.001)
             GPIO.output(self.dio, (data & 1) == 1)
+	    sleep(0.001)
             data >>= 1
             GPIO.output(self.clk, True)
+	    sleep(0.001)
 
     def set_led(self, n, color):
         self.send_data((n << 1) + 1, color)
@@ -106,23 +120,29 @@ class TM1638(object):
     def set_text(self, text):
         dots = 0b00000000
         pos = text.find('.')
+	posdot = 9
         if pos != -1:
             dots = dots | (128 >> pos+(8-len(text)))
             text = text.replace('.', '')
+	    posdot = 8 - len(text) + pos
 
-        self.send_char(7, self.rotate_bits(dots))
+#        self.send_char(7, self.rotate_bits(dots))
         text = text[0:8]
         text = text[::-1]
         text += " "*(8-len(text))
-        for i in range(0, 7):
+        for i in range(0, 8):
             byte = 0b00000000;
-            for pos in range(8):
-                c = text[pos]
-                if c == 'c':
-                    byte = (byte | self.get_bit_mask(pos, c, i))
-                elif c != ' ':
-                    byte = (byte | self.get_bit_mask(pos, c, i))
-            self.send_char(i, self.rotate_bits(byte))
+#            for pos in range(8):
+#                c = text[pos]
+#                if c == 'c':
+#                    byte = (byte | self.get_bit_mask(pos, c, i))
+#                elif c != ' ':
+#                    byte = (byte | self.get_bit_mask(pos, c, i))
+#            self.send_char(i, self.rotate_bits(byte))
+	    if 8-i == posdot: 
+            	self.send_char(7-i,self.FONT[text[i]] | 0b10000000)
+	    else:
+            	self.send_char(7-i,self.FONT[text[i]])
 
     def receive(self):
         temp = 0
@@ -146,8 +166,8 @@ class TM1638(object):
         return keys
 
     def rotate_bits(self, num):
-        for i in range(0, 4):
-            num = self.rotr(num, 8)
+#        for i in range(0, 4):
+#            num = self.rotr(num, 8)
         return num
 
     def rotr(self, num, bits):

@@ -1,5 +1,11 @@
 # py-tm1638
 
-Python library for the TM1638 7 segment display with 16 buttons.
+Python library for the TM1638 8 LEDs 7 segment display with 8 buttons.
 
-This module is commonly sold on deal extreme and eBay, but differs from the version that has 8 LEDs and 8 buttons. The 8 button version is common cathode, the 16 button version is common anode.
+This module is commonly sold on deal extreme and eBay
+
+The module works with 3.3V. It is not advised to use 5V as the buttons function communicates back with the Pi.
+
+
+
+

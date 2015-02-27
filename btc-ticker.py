@@ -27,12 +27,13 @@ source = 'https://www.bitstamp.net/api/ticker/'
 while True:
     try:
         data = json.loads(urllib2.urlopen(source).read())
-        dotpos = data['last'].find(".")-1
-        text = (data['last'].replace(".",""))[0:8]
-        for i in range(8-len(text)):
-            display.send_char(i, 0)
-        for i in range(len(text)):
-            display.set_digit(8-len(text)+i, int(text[i]), i==dotpos)
+	display.set_text(data['last'])
+#       dotpos = data['last'].find(".")-1
+#       text = (data['last'].replace(".",""))[0:8]
+#       for i in range(8-len(text)):
+#           display.send_char(i, 0)
+#       for i in range(len(text)):
+#           display.set_digit(8-len(text)+i, int(text[i]), i==dotpos)
     except:
         print traceback.format_exc()
     time.sleep(30)
